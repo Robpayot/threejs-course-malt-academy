@@ -1,0 +1,16 @@
+.scene {
+  height: 100%;
+  width: 100%;
+  z-index: 3;
+
+  &__canvas {
+    height: 100%;
+    width: 100%;
+    position: relative;
+  }
+}
+
+.dg.ac {
+  // display: none;
+  z-index: 4 !important;
+}
