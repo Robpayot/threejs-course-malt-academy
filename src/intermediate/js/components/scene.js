@@ -30,6 +30,7 @@ export default class Scene {
     this.buildControls()
     this.buildAxesHelper()
     this.buildBoxes()
+    this.buildRaycaster()
 
     this.handleResize()
 
@@ -70,6 +71,11 @@ export default class Scene {
     this.scene.add(this.camera)
   }
 
+  buildRaycaster() {
+    this.raycaster = new THREE.Raycaster()
+    this.mouse = new THREE.Vector2()
+  }
+
   buildControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     // this.controls.enableDamping = true
@@ -86,10 +92,11 @@ export default class Scene {
   buildBoxes() {
     this.boxes = []
     const geometry = new THREE.BoxGeometry(1, 1, 1)
-    const material = new THREE.MeshBasicMaterial({ map: this.texture })
+
 
     for (let i = 0; i < LINE_LENGTH; i++) {
       for (let y = 0; y < COLUMN_LENGTH; y++) {
+        const material = new THREE.MeshBasicMaterial({ map: this.texture })
         const mesh = new THREE.Mesh(geometry, material)
         mesh.position.x = i - LINE_LENGTH / 2 + 0.5
         mesh.position.z = y - COLUMN_LENGTH / 2 + 0.5
@@ -102,6 +109,7 @@ export default class Scene {
   events() {
     window.addEventListener('resize', this.handleResize, { passive: true })
     this.handleRAF(0)
+    window.addEventListener('mousemove', this.handleMousemove)
   }
 
   // EVENTS
@@ -115,8 +123,27 @@ export default class Scene {
 
     for (let i = 0; i < this.boxes.length; i++) {
       const box = this.boxes[i]
-      box.position.y = (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
+      box.position.y =
+        (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
     }
+
+    // update the picking ray with the camera and mouse position
+    this.raycaster.setFromCamera(this.mouse, this.camera)
+
+    // calculate objects intersecting the picking ray
+    const intersects = this.raycaster.intersectObjects(this.boxes)
+
+    for (let i = 0; i < intersects.length; i++) {
+      intersects[i].object.material.color.set(0xff0000)
+    }
+  }
+
+  handleMousemove = event => {
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+
+    this.mouse.x = (event.clientX / this.width) * 2 - 1
+    this.mouse.y = -(event.clientY / this.height) * 2 + 1
   }
 
   handleResize = () => {
