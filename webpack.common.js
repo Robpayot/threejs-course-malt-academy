@@ -138,10 +138,3 @@ module.exports = {
     }),
   ].concat(isProd ? prodPlugins : []),
 }
-
-// output: {
-//   // filename: isProd ? '/bundle.[chunkhash].js' : './bundle.js',
-//   path: path.resolve(__dirname, 'build'),
-//   filename: './[name]/bundle.js',
-//   publicPath: '/',
-// },

@@ -14,9 +14,11 @@ export default class Scene {
   load() {
     const textureLoader = new THREE.TextureLoader()
     textureLoader.load(`${ASSETS}texture.png`, result => {
-      this.texture = result
+      this.boxTexture = result
       this.init()
     })
+
+    this.matcapTexture = textureLoader.load(`${ASSETS}matcap.png`)
   }
 
   init = () => {
@@ -27,6 +29,9 @@ export default class Scene {
     this.buildControls()
     this.buildAxesHelper()
     this.buildBox()
+    this.buildSphere()
+    this.buildCone()
+    this.buildLight()
 
     this.handleResize()
 
@@ -61,9 +66,7 @@ export default class Scene {
     this.camera.updateProjectionMatrix()
     this.initPosY = 0
     this.initPosY = 100
-    this.camera.position.y = 5
-    this.camera.position.x = 5
-    this.camera.position.z = 5
+    this.camera.position.z = 10
     this.camera.lookAt(0, 0, 0)
 
     this.scene.add(this.camera)
@@ -84,10 +87,33 @@ export default class Scene {
 
   buildBox() {
     const geometry = new THREE.BoxGeometry(1, 1, 1)
-    const material = new THREE.MeshBasicMaterial({ map: this.texture })
+    const material = new THREE.MeshBasicMaterial({ map: this.boxTexture })
 
-    const mesh = new THREE.Mesh(geometry, material)
-    this.scene.add(mesh)
+    this.box = new THREE.Mesh(geometry, material)
+    this.box.position.set(-3, 0, 0)
+    this.scene.add(this.box)
+  }
+
+  buildSphere() {
+    const geometry = new THREE.SphereGeometry(1, 32, 32)
+    const material = new THREE.MeshMatcapMaterial({ matcap: this.matcapTexture })
+    this.sphere = new THREE.Mesh(geometry, material)
+    this.sphere.position.set(0, 0, 0)
+    this.scene.add(this.sphere)
+  }
+
+  buildCone() {
+    const geometry = new THREE.ConeGeometry(1, 2, 120)
+    const material = new THREE.MeshPhongMaterial({ color: 0x61BFF9 })
+    this.cone = new THREE.Mesh(geometry, material)
+    this.cone.position.set(3, 0, 0)
+    this.scene.add(this.cone)
+  }
+
+  buildLight() {
+    this.pointLight = new THREE.PointLight(0xffffff, 1, 100)
+    this.pointLight.position.set(0,5,5)
+    this.scene.add(this.pointLight)
   }
 
   events() {
@@ -101,6 +127,14 @@ export default class Scene {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
+
+
+    this.box.rotation.x += 1 / 500
+    this.box.rotation.y += 1 / 500
+    this.cone.rotation.x += 1 / 500
+    this.cone.rotation.y += 1 / 500
+    this.sphere.rotation.x += 1 / 500
+    this.sphere.rotation.y += 1 / 500
   }
 
   handleResize = () => {
