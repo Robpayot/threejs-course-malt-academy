@@ -93,7 +93,6 @@ export default class Scene {
     this.boxes = []
     const geometry = new THREE.BoxGeometry(1, 1, 1)
 
-
     for (let i = 0; i < LINE_LENGTH; i++) {
       for (let y = 0; y < COLUMN_LENGTH; y++) {
         const material = new THREE.MeshBasicMaterial({ map: this.texture })
@@ -121,12 +120,6 @@ export default class Scene {
     const fq = 900
     const amplitude = 2
 
-    for (let i = 0; i < this.boxes.length; i++) {
-      const box = this.boxes[i]
-      box.position.y =
-        (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
-    }
-
     // update the picking ray with the camera and mouse position
     this.raycaster.setFromCamera(this.mouse, this.camera)
 
@@ -135,6 +128,15 @@ export default class Scene {
 
     for (let i = 0; i < intersects.length; i++) {
       intersects[i].object.material.color.set(0xff0000)
+      setTimeout(() => {
+        intersects[i].object.material.color.set(0xffffff)
+      }, 2000)
+    }
+
+    for (let i = 0; i < this.boxes.length; i++) {
+      const box = this.boxes[i]
+      box.position.y =
+        (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
     }
   }
 
