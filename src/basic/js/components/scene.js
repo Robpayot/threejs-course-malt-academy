@@ -64,8 +64,6 @@ export default class Scene {
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.updateProjectionMatrix()
-    this.initPosY = 0
-    this.initPosY = 100
     this.camera.position.z = 10
     this.camera.lookAt(0, 0, 0)
 

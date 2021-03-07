@@ -4,6 +4,9 @@ import Stats from 'stats-js'
 
 const ASSETS = './intermediate/img/'
 
+const LINE_LENGTH = 10
+const COLUMN_LENGTH = 10
+
 export default class Scene {
   constructor(el) {
     this.canvas = el
@@ -26,7 +29,7 @@ export default class Scene {
     this.buildCamera()
     this.buildControls()
     this.buildAxesHelper()
-    this.buildBox()
+    this.buildBoxes()
 
     this.handleResize()
 
@@ -59,8 +62,6 @@ export default class Scene {
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.updateProjectionMatrix()
-    this.initPosY = 0
-    this.initPosY = 100
     this.camera.position.y = 5
     this.camera.position.x = 5
     this.camera.position.z = 5
@@ -82,12 +83,20 @@ export default class Scene {
     this.scene.add(axesHelper)
   }
 
-  buildBox() {
+  buildBoxes() {
+    this.boxes = []
     const geometry = new THREE.BoxGeometry(1, 1, 1)
     const material = new THREE.MeshBasicMaterial({ map: this.texture })
 
-    const mesh = new THREE.Mesh(geometry, material)
-    this.scene.add(mesh)
+    for (let i = 0; i < LINE_LENGTH; i++) {
+      for (let y = 0; y < COLUMN_LENGTH; y++) {
+        const mesh = new THREE.Mesh(geometry, material)
+        mesh.position.x = i - LINE_LENGTH / 2 + 0.5
+        mesh.position.z = y - COLUMN_LENGTH / 2 + 0.5
+        this.boxes.push(mesh)
+        this.scene.add(mesh)
+      }
+    }
   }
 
   events() {
@@ -101,6 +110,13 @@ export default class Scene {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
+    const fq = 900
+    const amplitude = 2
+
+    for (let i = 0; i < this.boxes.length; i++) {
+      const box = this.boxes[i]
+      box.position.y = (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
+    }
   }
 
   handleResize = () => {
