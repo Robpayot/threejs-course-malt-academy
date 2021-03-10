@@ -127,10 +127,11 @@ export default class Scene {
     const intersects = this.raycaster.intersectObjects(this.boxes)
 
     for (let i = 0; i < intersects.length; i++) {
-      intersects[i].object.material.color.set(0xff0000)
-      setTimeout(() => {
-        intersects[i].object.material.color.set(0xffffff)
-      }, 2000)
+      if (!intersects[i].object.isRed) {
+        console.log('not red')
+        intersects[i].object.isRed = true
+        this.changeSphereMaterial(intersects[i].object)
+      }
     }
 
     for (let i = 0; i < this.boxes.length; i++) {
@@ -138,6 +139,14 @@ export default class Scene {
       box.position.y =
         (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
     }
+  }
+
+  changeSphereMaterial(object) {
+    object.material.color.set(0xff0000)
+    setTimeout(() => {
+      object.material.color.set(0xffffff)
+      object.isRed = false
+    }, 2000)
   }
 
   handleMousemove = event => {
