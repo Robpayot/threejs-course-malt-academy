@@ -28,14 +28,6 @@ module.exports = {
     filename: './[name]/bundle.js',
     publicPath: '/',
   },
-  resolve: {
-    alias: {
-      '~constants': `${sourceDir}/js/constants`,
-      '~managers': `${sourceDir}/js/managers`,
-      '~utils': `${sourceDir}/js/utils`,
-      '~shaders': `${sourceDir}/js/shaders`,
-    },
-  },
   module: {
     rules: [
       {
@@ -61,6 +53,15 @@ module.exports = {
             : null,
           'sass-loader',
         ].filter(Boolean),
+      },
+      {
+        test: /\.(obj)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: { name: 'models/[name].[ext]' },
+          },
+        ],
       },
       {
         test: /\.(eot|ttf|woff|woff2)$/,

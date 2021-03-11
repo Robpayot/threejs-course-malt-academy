@@ -57,8 +57,8 @@ export default class Scene {
 
   buildCamera() {
     const aspectRatio = this.width / this.height
-    const fieldOfView = 60
-    const nearPlane = 1
+    const fieldOfView = 80
+    const nearPlane = 0.1
     const farPlane = 10000
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
