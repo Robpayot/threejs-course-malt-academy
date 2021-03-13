@@ -7,6 +7,7 @@ import { outExpo } from '../utils/ease'
 import Stats from 'stats-js'
 import wolf from '../../models/wolf.obj'
 import deer from '../../models/deer.obj'
+import cat from '../../models/cat.obj'
 import dat from 'dat.gui'
 
 const ASSETS = './advanced/img/'
@@ -20,12 +21,14 @@ export default class Scene {
     this.modelIndex = 0
 
     this.models = []
+    this.modelsScale = [300, 200, 200]
     this.modelAnimations = []
     this.textures = []
 
     this.load([
-      { type: 'obj', url: wolf },
       { type: 'obj', url: deer },
+      { type: 'obj', url: cat },
+      { type: 'obj', url: wolf },
       { type: 'texture', url: `${ASSETS}particle-2.png` },
     ])
   }
@@ -84,8 +87,9 @@ export default class Scene {
     this.buildAxesHelper()
 
     for (let i = 0; i < this.models.length; i++) {
-      this.buildModel(i)
+      this.buildPointsAnimation(i)
     }
+    this.buildMeshPoint()
 
     this.handleResize()
 
@@ -135,8 +139,8 @@ export default class Scene {
     // this.controls.enableDamping = true
   }
 
-  buildModel(index) {
-    const unscale = 200
+  buildPointsAnimation(index) {
+    const unscale = this.modelsScale[index]
 
     // this.model.children[0].geometry.scale.set(0.1, 0.1, 0.1)
     // Get a list of random points (THREE.Vector3) inside our model
@@ -146,29 +150,34 @@ export default class Scene {
       this.guiController.nb_particles,
     )
 
-    const explosionThreshold = 0.5 * unscale
+    const explosionThreshold = 0.5
 
     // create an animation "target to go" for each particles
 
     const pointsAnimation = []
     randomPoints.forEach(vector3 => {
+      const initPosition = new THREE.Vector3(vector3.x / unscale, vector3.y / unscale, vector3.z / unscale)
       const targetPosition = new THREE.Vector3(
         randomFloat(-explosionThreshold, explosionThreshold),
         randomFloat(-explosionThreshold, explosionThreshold),
         randomFloat(-explosionThreshold, explosionThreshold),
       )
       const animation = {
-        initPosition: new THREE.Vector3(vector3.x, vector3.y, vector3.z),
-        targetPosition: targetPosition.add(vector3),
+        initPosition,
+        targetPosition: targetPosition.add(initPosition),
       }
 
       pointsAnimation.push(animation)
     })
 
     this.modelAnimations.push(pointsAnimation)
+  }
 
+  buildMeshPoint() {
+    const pointsAnimation = this.modelAnimations[0]
+    const initPositions = pointsAnimation.map(item => item.initPosition)
     // Transform this list of point into an Float32Array
-    const arrayOfPoints = [...randomPoints].map(el => el.toArray()).flat(1) // transform THREE.Vector3(x,y,z) into [x,y,z] for BufferAttribute
+    const arrayOfPoints = [...initPositions].map(item => item.toArray()).flat(1) // transform THREE.Vector3(x,y,z) into [x,y,z] for BufferAttribute
     const vertices = new Float32Array(arrayOfPoints)
     // Create a new bufferGeometry with our Float32Array
     const randomizedGeometry = new THREE.BufferGeometry()
@@ -186,11 +195,9 @@ export default class Scene {
       map: this.textures[0],
     })
 
-    this.points = new THREE.Points(randomizedGeometry, material)
+    this.meshPoints = new THREE.Points(randomizedGeometry, material)
 
-    this.points.scale.set(1 / unscale, 1 / unscale, 1 / unscale)
-    // this.scene.add(this.model)
-    this.scene.add(this.points)
+    this.scene.add(this.meshPoints)
   }
 
   /**
@@ -226,7 +233,7 @@ export default class Scene {
    * Make particules explode in randomDirections
    */
   explode(now) {
-    const positions = this.points.geometry.getAttribute('position')
+    const positions = this.meshPoints.geometry.getAttribute('position')
 
     const percent = (now - this.explodeStart) / EXPLODE_DURATION
     if (percent < 1) {
@@ -246,7 +253,7 @@ export default class Scene {
   }
 
   implose(now) {
-    const positions = this.points.geometry.getAttribute('position')
+    const positions = this.meshPoints.geometry.getAttribute('position')
 
     const nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
 
@@ -264,7 +271,6 @@ export default class Scene {
     } else {
       this.imploseStart = null
       this.modelIndex = nextModelIndex
-
       this.explodeStart = performance.now()
     }
 
@@ -288,7 +294,7 @@ export default class Scene {
   onGuiChange = () => {
     this.destroy()
     for (let i = 0; i < this.models.length; i++) {
-      this.buildModel(i)
+      this.buildPointsAnimation(i)
     }
   }
 
