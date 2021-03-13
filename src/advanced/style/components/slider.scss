@@ -1,6 +1,18 @@
+@mixin transitionUp {
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) {
+      transition-delay: #{$i * 0.125}s;
+    }
+  }
+}
+
+$out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+
 .slider {
   align-items: center;
+  color: black;
   display: flex;
+  font-family: 'Lora';
   height: 100%;
   justify-content: space-between;
   left: 0;
@@ -8,4 +20,46 @@
   top: 0;
   width: 100%;
   z-index: 2;
+
+  &__title {
+    font-size: 120px;
+    line-height: 1;
+    overflow: hidden;
+
+    .title__char {
+      display: inline-block;
+      transform: translateY(100%);
+      transition: transform 2s $out-expo;
+      @include transitionUp;
+    }
+
+    &.appear {
+      .title__char {
+        transform: translateY(0%);
+      }
+    }
+  }
+
+  &__button {
+    border: 1px solid black;
+    border-radius: 50%;
+    height: 70px;
+    font-family: 'Lora';
+    width: 70px;
+    background-color: transparent;
+    margin: 0 40px;
+    cursor: pointer;
+    font-size: 18px;
+    transform: scale(0.9);
+    transition: transform 1s $out-expo;
+    outline: none;
+
+    &:active {
+      outline: none;
+    }
+
+    &:hover {
+      transform: scale(1);
+    }
+  }
 }

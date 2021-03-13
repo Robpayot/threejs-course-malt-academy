@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GeometryUtils } from '../utils/GeometryUtils'
 import { randomFloat } from '../utils/math'
-import { outCube, inOutCube } from '../utils/ease'
+import { outQuad, inOutQuad } from '../utils/ease'
 import Stats from 'stats-js'
 import wolf from '../../models/wolf.obj'
 import deer from '../../models/deer.obj'
@@ -12,12 +11,12 @@ import dat from 'dat.gui'
 
 const ASSETS = './advanced/img/'
 const NB_PARTICLES = 6000
-const EXPLODE_DURATION = 1800 // in miliseconds
-const IMPLOSE_DURATION = 1500
+const EXPLODE_DURATION = 1300 // in miliseconds
+const IMPLOSE_DURATION = 1700
 
 const ROTATION_SPEED = 1 / 400
 
-const EXPLOSION_FORCE = 1.8
+const EXPLOSION_FORCE = 4
 
 export default class Scene {
   constructor(el) {
@@ -73,22 +72,7 @@ export default class Scene {
   }
 
   init = () => {
-    this.gui = new dat.GUI()
-
-    this.guiController = {
-      color: 0x000000,
-      size: 0.04,
-    }
-
-    this.gui
-      .addColor(this.guiController, 'color', 0, 10000)
-      .name('particles colors')
-      .onChange(this.handleGuiChange)
-    this.gui
-      .add(this.guiController, 'size', 0.0, 0.1)
-      .name('particles size')
-      .onChange(this.handleGuiChange)
-
+    this.buildGui()
     this.buildStats()
     this.buildScene()
     this.buildRender()
@@ -104,6 +88,29 @@ export default class Scene {
 
     // start RAF
     this.events()
+  }
+
+  buildGui() {
+    this.gui = new dat.GUI()
+
+    this.guiController = {
+      color: 0x000000,
+      size: 0.04,
+      opacity: 0.7,
+    }
+
+    this.gui
+      .addColor(this.guiController, 'color', 0, 10000)
+      .name('particles colors')
+      .onChange(this.handleGuiChange)
+    this.gui
+      .add(this.guiController, 'size', 0.0, 0.08)
+      .name('particles size')
+      .onChange(this.handleGuiChange)
+    this.gui
+      .add(this.guiController, 'opacity', 0.0, 1)
+      .name('particles opacity')
+      .onChange(this.handleGuiChange)
   }
 
   buildStats() {
@@ -138,11 +145,6 @@ export default class Scene {
     this.camera.lookAt(0, 0, 0)
 
     this.scene.add(this.camera)
-  }
-
-  buildControls() {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    // this.controls.enableDamping = true
   }
 
   buildPointsAnimation(index) {
@@ -191,11 +193,11 @@ export default class Scene {
     // Use the THREE Point Material to display particles based on our bufferGeometry
     const material = new THREE.PointsMaterial({
       color: this.guiController.color,
-      size: 0.04,
+      size: this.guiController.size,
       depthTest: false,
       transparent: true,
       // blending: THREE.AdditiveBlending,
-      opacity: 0.7,
+      opacity: this.guiController.opacity,
       map: this.textures[0],
     })
 
@@ -261,6 +263,7 @@ export default class Scene {
     //set the color in the object
     this.meshPoints.material.color = new THREE.Color(this.guiController.color)
     this.meshPoints.material.size = this.guiController.size
+    this.meshPoints.material.opacity = this.guiController.opacity
   }
 
   /**
@@ -274,9 +277,9 @@ export default class Scene {
       const animations = this.modelAnimations[this.modelIndex]
       for (let i = 0; i < positions.count; i++) {
         const v = animations[i]
-        positions.array[i * 3 + 0] = v.initPosition.x + (v.targetPosition.x - v.initPosition.x) * outCube(percent)
-        positions.array[i * 3 + 1] = v.initPosition.y + (v.targetPosition.y - v.initPosition.y) * outCube(percent)
-        positions.array[i * 3 + 2] = v.initPosition.z + (v.targetPosition.z - v.initPosition.z) * outCube(percent)
+        positions.array[i * 3 + 0] = v.initPosition.x + (v.targetPosition.x - v.initPosition.x) * outQuad(percent)
+        positions.array[i * 3 + 1] = v.initPosition.y + (v.targetPosition.y - v.initPosition.y) * outQuad(percent)
+        positions.array[i * 3 + 2] = v.initPosition.z + (v.targetPosition.z - v.initPosition.z) * outQuad(percent)
       }
     } else {
       this.explodeStart = null
@@ -298,11 +301,11 @@ export default class Scene {
         const v = animations[i]
         const vNext = nextAnimations[i]
         positions.array[i * 3 + 0] =
-          v.targetPosition.x + (vNext.initPosition.x - v.targetPosition.x) * inOutCube(percent)
+          v.targetPosition.x + (vNext.initPosition.x - v.targetPosition.x) * inOutQuad(percent)
         positions.array[i * 3 + 1] =
-          v.targetPosition.y + (vNext.initPosition.y - v.targetPosition.y) * inOutCube(percent)
+          v.targetPosition.y + (vNext.initPosition.y - v.targetPosition.y) * inOutQuad(percent)
         positions.array[i * 3 + 2] =
-          v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * inOutCube(percent)
+          v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * inOutQuad(percent)
       }
     } else {
       this.imploseStart = null
