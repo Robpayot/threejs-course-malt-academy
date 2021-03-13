@@ -1,38 +1,67 @@
 import * as THREE from 'three'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { GeometryUtils } from '../utils/GeometryUtils.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { GeometryUtils } from '../utils/GeometryUtils'
+import { randomFloat } from '../utils/math'
+import { outExpo } from '../utils/ease'
 import Stats from 'stats-js'
-import model from '../../models/suzanne.obj'
+import wolf from '../../models/wolf.obj'
+import deer from '../../models/deer.obj'
 import dat from 'dat.gui'
+
 const ASSETS = './advanced/img/'
-
-console.log(GeometryUtils)
-
 const NB_PARTICLES = 4000
+const EXPLODE_DURATION = 2000 // in miliseconds
 
 export default class Scene {
   constructor(el) {
     this.canvas = el
 
-    this.load()
-    console.log(model)
+    this.modelIndex = 0
+
+    this.models = []
+    this.modelAnimations = []
+    this.textures = []
+
+    this.load([
+      { type: 'obj', url: wolf },
+      { type: 'obj', url: deer },
+      { type: 'texture', url: `${ASSETS}particle-2.png` },
+    ])
   }
 
-  load() {
-    // instantiate a loader
+  load = objects => {
+    const promises = []
     const objLoader = new OBJLoader()
+    const textureLoader = new THREE.TextureLoader()
 
-    objLoader.load(model, result => {
-      // this.subjects['suzanne'].obj = result
-      this.model = result
+    for (let i = 0; i < objects.length; i++) {
+      const { type, url } = objects[i]
 
-      const textureLoader = new THREE.TextureLoader()
-      textureLoader.load(`${ASSETS}particle-2.png`, result => {
-        this.particleTexture = result
-        this.init()
-      })
-    })
+      if (type === 'obj') {
+        // load OBJ
+        promises.push(
+          new Promise(resolve => {
+            objLoader.load(url, result => {
+              this.models.push(result)
+              resolve(result)
+            })
+          }),
+        )
+      } else if (type === 'texture') {
+        // load Textures
+        promises.push(
+          new Promise(resolve => {
+            textureLoader.load(url, result => {
+              this.textures.push(result)
+              resolve(result)
+            })
+          }),
+        )
+      }
+    }
+
+    Promise.all(promises).then(this.init)
   }
 
   init = () => {
@@ -53,9 +82,16 @@ export default class Scene {
     this.buildCamera()
     this.buildControls()
     this.buildAxesHelper()
-    this.buildModel()
+
+    for (let i = 0; i < this.models.length; i++) {
+      this.buildModel(i)
+    }
 
     this.handleResize()
+
+    setTimeout(() => {
+      this.explodeStart = performance.now()
+    }, 2000)
 
     // start RAF
     this.events()
@@ -99,18 +135,47 @@ export default class Scene {
     // this.controls.enableDamping = true
   }
 
-  buildModel() {
+  buildModel(index) {
+    const unscale = 200
+
+    // this.model.children[0].geometry.scale.set(0.1, 0.1, 0.1)
+    // Get a list of random points (THREE.Vector3) inside our model
+    // here we are using an utils that doing the math for us
     const randomPoints = GeometryUtils.randomPointsInBufferGeometry(
-      this.model.children[0].geometry,
+      this.models[index].children[0].geometry,
       this.guiController.nb_particles,
     )
+
+    const explosionThreshold = 0.5 * unscale
+
+    // create an animation "target to go" for each particles
+
+    const pointsAnimation = []
+    randomPoints.forEach(vector3 => {
+      const targetPosition = new THREE.Vector3(
+        randomFloat(-explosionThreshold, explosionThreshold),
+        randomFloat(-explosionThreshold, explosionThreshold),
+        randomFloat(-explosionThreshold, explosionThreshold),
+      )
+      const animation = {
+        initPosition: new THREE.Vector3(vector3.x, vector3.y, vector3.z),
+        targetPosition: targetPosition.add(vector3),
+      }
+
+      pointsAnimation.push(animation)
+    })
+
+    this.modelAnimations.push(pointsAnimation)
+
+    // Transform this list of point into an Float32Array
     const arrayOfPoints = [...randomPoints].map(el => el.toArray()).flat(1) // transform THREE.Vector3(x,y,z) into [x,y,z] for BufferAttribute
     const vertices = new Float32Array(arrayOfPoints)
+    // Create a new bufferGeometry with our Float32Array
     const randomizedGeometry = new THREE.BufferGeometry()
     // itemSize = 3 because there are 3 values (components) per vertex
     randomizedGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
 
-    // randomizedGeometry
+    // Use the THREE Point Material to display particles based on our bufferGeometry
     const material = new THREE.PointsMaterial({
       color: 0xffffff,
       size: 0.04,
@@ -118,12 +183,14 @@ export default class Scene {
       transparent: true,
       blending: THREE.AdditiveBlending,
       opacity: 0.7,
-      map: this.particleTexture,
+      map: this.textures[0],
     })
 
-    const points = new THREE.Points(randomizedGeometry, material)
+    this.points = new THREE.Points(randomizedGeometry, material)
+
+    this.points.scale.set(1 / unscale, 1 / unscale, 1 / unscale)
     // this.scene.add(this.model)
-    this.scene.add(points)
+    this.scene.add(this.points)
   }
 
   /**
@@ -145,6 +212,63 @@ export default class Scene {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
+
+    if (this.explodeStart) {
+      this.explode(now)
+    }
+
+    if (this.imploseStart) {
+      this.implose(now)
+    }
+  }
+
+  /**
+   * Make particules explode in randomDirections
+   */
+  explode(now) {
+    const positions = this.points.geometry.getAttribute('position')
+
+    const percent = (now - this.explodeStart) / EXPLODE_DURATION
+    if (percent < 1) {
+      const animations = this.modelAnimations[this.modelIndex]
+      for (let i = 0; i < positions.count; i++) {
+        const v = animations[i]
+        positions.array[i * 3 + 0] = v.initPosition.x + (v.targetPosition.x - v.initPosition.x) * outExpo(percent)
+        positions.array[i * 3 + 1] = v.initPosition.y + (v.targetPosition.y - v.initPosition.y) * outExpo(percent)
+        positions.array[i * 3 + 2] = v.initPosition.z + (v.targetPosition.z - v.initPosition.z) * outExpo(percent)
+      }
+    } else {
+      this.explodeStart = null
+      this.imploseStart = performance.now()
+    }
+
+    positions.needsUpdate = true
+  }
+
+  implose(now) {
+    const positions = this.points.geometry.getAttribute('position')
+
+    const nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
+
+    const percent = (now - this.imploseStart) / EXPLODE_DURATION
+    if (percent < 1) {
+      const animations = this.modelAnimations[this.modelIndex]
+      const nextAnimations = this.modelAnimations[nextModelIndex]
+      for (let i = 0; i < positions.count; i++) {
+        const v = animations[i]
+        const vNext = nextAnimations[i]
+        positions.array[i * 3 + 0] = v.targetPosition.x + (vNext.initPosition.x - v.targetPosition.x) * outExpo(percent)
+        positions.array[i * 3 + 1] = v.targetPosition.y + (vNext.initPosition.y - v.targetPosition.y) * outExpo(percent)
+        positions.array[i * 3 + 2] = v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * outExpo(percent)
+      }
+    } else {
+      this.imploseStart = null
+      this.modelIndex = nextModelIndex
+
+      this.explodeStart = performance.now()
+    }
+
+    positions.needsUpdate = true
   }
 
   handleResize = () => {
@@ -163,7 +287,9 @@ export default class Scene {
 
   onGuiChange = () => {
     this.destroy()
-    this.buildModel()
+    for (let i = 0; i < this.models.length; i++) {
+      this.buildModel(i)
+    }
   }
 
   // Render
