@@ -13,9 +13,7 @@ const ASSETS = './advanced/img/'
 const NB_PARTICLES = 6000
 const EXPLODE_DURATION = 1300 // in miliseconds
 const IMPLOSE_DURATION = 1700
-
 const ROTATION_SPEED = 1 / 400
-
 const EXPLOSION_FORCE = 4
 
 export default class Scene {

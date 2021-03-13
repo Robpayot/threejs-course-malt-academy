@@ -49,7 +49,5 @@ export default class Slider {
     setTimeout(() => {
       this.titleEl.classList.add('appear')
     }, 400)
-
-    // this.titleEl
   }
 }
