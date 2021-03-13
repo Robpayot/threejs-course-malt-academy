@@ -14,7 +14,7 @@ const NB_PARTICLES = 6000
 const EXPLODE_DURATION = 1300 // in miliseconds
 const IMPLOSE_DURATION = 1700
 const ROTATION_SPEED = 1 / 400
-const EXPLOSION_FORCE = 4
+const EXPLOSION_FORCE = 4.5
 
 export default class Scene {
   constructor(el) {
@@ -31,7 +31,7 @@ export default class Scene {
       { type: 'obj', url: deer },
       { type: 'obj', url: wolf },
       { type: 'obj', url: cat },
-      { type: 'texture', url: `${ASSETS}particle-2.png` },
+      { type: 'texture', url: `${ASSETS}particle.png` },
     ])
   }
 
@@ -75,8 +75,6 @@ export default class Scene {
     this.buildScene()
     this.buildRender()
     this.buildCamera()
-    this.buildControls()
-
     for (let i = 0; i < this.models.length; i++) {
       this.buildPointsAnimation(i)
     }
@@ -137,7 +135,7 @@ export default class Scene {
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.updateProjectionMatrix()
-    this.camera.position.y = 4
+    this.camera.position.y = 3.5
     this.camera.position.x = 0
     this.camera.position.z = 8
     this.camera.lookAt(0, 0, 0)
