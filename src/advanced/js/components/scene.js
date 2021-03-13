@@ -11,7 +11,7 @@ import cat from '../../models/cat.obj'
 import dat from 'dat.gui'
 
 const ASSETS = './advanced/img/'
-const NB_PARTICLES = 4000
+const NB_PARTICLES = 6000
 const EXPLODE_DURATION = 2000 // in miliseconds
 
 export default class Scene {
@@ -27,8 +27,8 @@ export default class Scene {
 
     this.load([
       { type: 'obj', url: deer },
-      { type: 'obj', url: cat },
       { type: 'obj', url: wolf },
+      { type: 'obj', url: cat },
       { type: 'texture', url: `${ASSETS}particle-2.png` },
     ])
   }
@@ -84,7 +84,6 @@ export default class Scene {
     this.buildRender()
     this.buildCamera()
     this.buildControls()
-    this.buildAxesHelper()
 
     for (let i = 0; i < this.models.length; i++) {
       this.buildPointsAnimation(i)
@@ -126,9 +125,9 @@ export default class Scene {
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.updateProjectionMatrix()
-    this.camera.position.y = 5
-    this.camera.position.x = -5
-    this.camera.position.z = 5
+    this.camera.position.y = 4
+    this.camera.position.x = 0
+    this.camera.position.z = 8
     this.camera.lookAt(0, 0, 0)
 
     this.scene.add(this.camera)
@@ -150,7 +149,7 @@ export default class Scene {
       this.guiController.nb_particles,
     )
 
-    const explosionThreshold = 0.5
+    const explosionThreshold = 5
 
     // create an animation "target to go" for each particles
 
@@ -196,37 +195,10 @@ export default class Scene {
     })
 
     this.meshPoints = new THREE.Points(randomizedGeometry, material)
+    this.meshPoints.position.y = -1.2
+    this.meshPoints.rotation.y = THREE.MathUtils.degToRad(-90)
 
     this.scene.add(this.meshPoints)
-  }
-
-  /**
-   * Axes Helper
-   */
-  buildAxesHelper() {
-    const axesHelper = new THREE.AxesHelper(3)
-    this.scene.add(axesHelper)
-  }
-
-  events() {
-    window.addEventListener('resize', this.handleResize, { passive: true })
-    this.handleRAF(0)
-  }
-
-  // EVENTS
-
-  handleRAF = now => {
-    // now: time in ms
-    this.render(now)
-    this.raf = window.requestAnimationFrame(this.handleRAF)
-
-    if (this.explodeStart) {
-      this.explode(now)
-    }
-
-    if (this.imploseStart) {
-      this.implose(now)
-    }
   }
 
   /**
@@ -277,6 +249,19 @@ export default class Scene {
     positions.needsUpdate = true
   }
 
+  events() {
+    window.addEventListener('resize', this.handleResize, { passive: true })
+    this.handleRAF(0)
+  }
+
+  // EVENTS
+
+  handleRAF = now => {
+    // now: time in ms
+    this.render(now)
+    this.raf = window.requestAnimationFrame(this.handleRAF)
+  }
+
   handleResize = () => {
     this.width = window.innerWidth
     this.height = window.innerHeight
@@ -301,6 +286,16 @@ export default class Scene {
   // Render
   render = now => {
     this.stats.begin()
+
+    if (this.explodeStart) {
+      this.explode(now)
+    }
+
+    if (this.imploseStart) {
+      this.implose(now)
+    }
+
+    this.meshPoints.rotation.y -= 1 / 500
 
     if (this.controls) this.controls.update() // for damping
     this.renderer.render(this.scene, this.camera)
