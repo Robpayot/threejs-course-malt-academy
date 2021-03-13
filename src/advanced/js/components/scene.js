@@ -12,7 +12,7 @@ import dat from 'dat.gui'
 
 const ASSETS = './advanced/img/'
 const NB_PARTICLES = 6000
-const EXPLODE_DURATION = 2000 // in miliseconds
+const EXPLODE_DURATION = 4000 // in miliseconds
 
 export default class Scene {
   constructor(el) {
@@ -71,12 +71,12 @@ export default class Scene {
     this.gui = new dat.GUI()
 
     this.guiController = {
-      nb_particles: NB_PARTICLES,
+      color: 0xffffff,
     }
 
     this.gui
-      .add(this.guiController, 'nb_particles', 0, 10000)
-      .name('nb particles')
+      .addColor(this.guiController, 'color', 0, 10000)
+      .name('particles colors')
       .onChange(this.onGuiChange)
 
     this.buildStats()
@@ -146,7 +146,7 @@ export default class Scene {
     // here we are using an utils that doing the math for us
     const randomPoints = GeometryUtils.randomPointsInBufferGeometry(
       this.models[index].children[0].geometry,
-      this.guiController.nb_particles,
+      NB_PARTICLES,
     )
 
     const explosionThreshold = 5
@@ -277,10 +277,8 @@ export default class Scene {
   }
 
   onGuiChange = () => {
-    this.destroy()
-    for (let i = 0; i < this.models.length; i++) {
-      this.buildPointsAnimation(i)
-    }
+    //set the color in the object
+    this.meshPoints.material.color = new THREE.Color(this.guiController.color)
   }
 
   // Render
