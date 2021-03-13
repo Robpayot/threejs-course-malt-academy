@@ -3,7 +3,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GeometryUtils } from '../utils/GeometryUtils'
 import { randomFloat } from '../utils/math'
-import { outExpo } from '../utils/ease'
+import { outCube, inOutCube } from '../utils/ease'
 import Stats from 'stats-js'
 import wolf from '../../models/wolf.obj'
 import deer from '../../models/deer.obj'
@@ -12,14 +12,19 @@ import dat from 'dat.gui'
 
 const ASSETS = './advanced/img/'
 const NB_PARTICLES = 6000
-const EXPLODE_DURATION = 4000 // in miliseconds
+const EXPLODE_DURATION = 1800 // in miliseconds
+const IMPLOSE_DURATION = 1500
+
+const ROTATION_SPEED = 1 / 400
+
+const EXPLOSION_FORCE = 1.8
 
 export default class Scene {
   constructor(el) {
     this.canvas = el
 
     this.modelIndex = 0
-
+    this.nextModelIndex = 0
     this.models = []
     this.modelsScale = [300, 200, 200]
     this.modelAnimations = []
@@ -71,13 +76,18 @@ export default class Scene {
     this.gui = new dat.GUI()
 
     this.guiController = {
-      color: 0xffffff,
+      color: 0x000000,
+      size: 0.04,
     }
 
     this.gui
       .addColor(this.guiController, 'color', 0, 10000)
       .name('particles colors')
-      .onChange(this.onGuiChange)
+      .onChange(this.handleGuiChange)
+    this.gui
+      .add(this.guiController, 'size', 0.0, 0.1)
+      .name('particles size')
+      .onChange(this.handleGuiChange)
 
     this.buildStats()
     this.buildScene()
@@ -92,10 +102,6 @@ export default class Scene {
 
     this.handleResize()
 
-    setTimeout(() => {
-      this.explodeStart = performance.now()
-    }, 2000)
-
     // start RAF
     this.events()
   }
@@ -108,6 +114,7 @@ export default class Scene {
 
   buildScene() {
     this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0xffffff)
   }
 
   buildRender() {
@@ -149,17 +156,15 @@ export default class Scene {
       NB_PARTICLES,
     )
 
-    const explosionThreshold = 5
-
     // create an animation "target to go" for each particles
 
     const pointsAnimation = []
     randomPoints.forEach(vector3 => {
       const initPosition = new THREE.Vector3(vector3.x / unscale, vector3.y / unscale, vector3.z / unscale)
       const targetPosition = new THREE.Vector3(
-        randomFloat(-explosionThreshold, explosionThreshold),
-        randomFloat(-explosionThreshold, explosionThreshold),
-        randomFloat(-explosionThreshold, explosionThreshold),
+        randomFloat(-EXPLOSION_FORCE, EXPLOSION_FORCE),
+        randomFloat(-EXPLOSION_FORCE, EXPLOSION_FORCE),
+        randomFloat(-EXPLOSION_FORCE, EXPLOSION_FORCE),
       )
       const animation = {
         initPosition,
@@ -185,11 +190,11 @@ export default class Scene {
 
     // Use the THREE Point Material to display particles based on our bufferGeometry
     const material = new THREE.PointsMaterial({
-      color: 0xffffff,
+      color: this.guiController.color,
       size: 0.04,
       depthTest: false,
       transparent: true,
-      blending: THREE.AdditiveBlending,
+      // blending: THREE.AdditiveBlending,
       opacity: 0.7,
       map: this.textures[0],
     })
@@ -201,56 +206,10 @@ export default class Scene {
     this.scene.add(this.meshPoints)
   }
 
-  /**
-   * Make particules explode in randomDirections
-   */
-  explode(now) {
-    const positions = this.meshPoints.geometry.getAttribute('position')
-
-    const percent = (now - this.explodeStart) / EXPLODE_DURATION
-    if (percent < 1) {
-      const animations = this.modelAnimations[this.modelIndex]
-      for (let i = 0; i < positions.count; i++) {
-        const v = animations[i]
-        positions.array[i * 3 + 0] = v.initPosition.x + (v.targetPosition.x - v.initPosition.x) * outExpo(percent)
-        positions.array[i * 3 + 1] = v.initPosition.y + (v.targetPosition.y - v.initPosition.y) * outExpo(percent)
-        positions.array[i * 3 + 2] = v.initPosition.z + (v.targetPosition.z - v.initPosition.z) * outExpo(percent)
-      }
-    } else {
-      this.explodeStart = null
-      this.imploseStart = performance.now()
-    }
-
-    positions.needsUpdate = true
-  }
-
-  implose(now) {
-    const positions = this.meshPoints.geometry.getAttribute('position')
-
-    const nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
-
-    const percent = (now - this.imploseStart) / EXPLODE_DURATION
-    if (percent < 1) {
-      const animations = this.modelAnimations[this.modelIndex]
-      const nextAnimations = this.modelAnimations[nextModelIndex]
-      for (let i = 0; i < positions.count; i++) {
-        const v = animations[i]
-        const vNext = nextAnimations[i]
-        positions.array[i * 3 + 0] = v.targetPosition.x + (vNext.initPosition.x - v.targetPosition.x) * outExpo(percent)
-        positions.array[i * 3 + 1] = v.targetPosition.y + (vNext.initPosition.y - v.targetPosition.y) * outExpo(percent)
-        positions.array[i * 3 + 2] = v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * outExpo(percent)
-      }
-    } else {
-      this.imploseStart = null
-      this.modelIndex = nextModelIndex
-      this.explodeStart = performance.now()
-    }
-
-    positions.needsUpdate = true
-  }
-
   events() {
     window.addEventListener('resize', this.handleResize, { passive: true })
+    window.addEventListener('go-prev', this.goPrev)
+    window.addEventListener('go-next', this.goNext)
     this.handleRAF(0)
   }
 
@@ -260,6 +219,28 @@ export default class Scene {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
+  }
+
+  goPrev = () => {
+    if (this.isAnimating) {
+      // directly update index to next animation
+      this.modelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
+    }
+
+    this.nextModelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
+    this.explodeStart = performance.now()
+    this.imploseStart = null
+  }
+
+  goNext = () => {
+    if (this.isAnimating) {
+      // directly update index to next animation
+      this.modelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
+    }
+
+    this.nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
+    this.explodeStart = performance.now()
+    this.imploseStart = null
   }
 
   handleResize = () => {
@@ -276,9 +257,60 @@ export default class Scene {
     this.renderer.setSize(this.width, this.height)
   }
 
-  onGuiChange = () => {
+  handleGuiChange = () => {
     //set the color in the object
     this.meshPoints.material.color = new THREE.Color(this.guiController.color)
+    this.meshPoints.material.size = this.guiController.size
+  }
+
+  /**
+   * Make particules explode in randomDirections
+   */
+  explode(now) {
+    const positions = this.meshPoints.geometry.getAttribute('position')
+
+    const percent = (now - this.explodeStart) / EXPLODE_DURATION
+    if (percent < 1.0) {
+      const animations = this.modelAnimations[this.modelIndex]
+      for (let i = 0; i < positions.count; i++) {
+        const v = animations[i]
+        positions.array[i * 3 + 0] = v.initPosition.x + (v.targetPosition.x - v.initPosition.x) * outCube(percent)
+        positions.array[i * 3 + 1] = v.initPosition.y + (v.targetPosition.y - v.initPosition.y) * outCube(percent)
+        positions.array[i * 3 + 2] = v.initPosition.z + (v.targetPosition.z - v.initPosition.z) * outCube(percent)
+      }
+    } else {
+      this.explodeStart = null
+      this.imploseStart = performance.now()
+    }
+
+    positions.needsUpdate = true
+    this.isAnimating = true
+  }
+
+  implose(now) {
+    const positions = this.meshPoints.geometry.getAttribute('position')
+
+    const percent = (now - this.imploseStart) / IMPLOSE_DURATION
+    if (percent < 1) {
+      const animations = this.modelAnimations[this.modelIndex]
+      const nextAnimations = this.modelAnimations[this.nextModelIndex]
+      for (let i = 0; i < positions.count; i++) {
+        const v = animations[i]
+        const vNext = nextAnimations[i]
+        positions.array[i * 3 + 0] =
+          v.targetPosition.x + (vNext.initPosition.x - v.targetPosition.x) * inOutCube(percent)
+        positions.array[i * 3 + 1] =
+          v.targetPosition.y + (vNext.initPosition.y - v.targetPosition.y) * inOutCube(percent)
+        positions.array[i * 3 + 2] =
+          v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * inOutCube(percent)
+      }
+    } else {
+      this.imploseStart = null
+      this.modelIndex = this.nextModelIndex
+      this.isAnimating = false
+    }
+
+    positions.needsUpdate = true
   }
 
   // Render
@@ -293,7 +325,7 @@ export default class Scene {
       this.implose(now)
     }
 
-    this.meshPoints.rotation.y -= 1 / 500
+    this.meshPoints.rotation.y -= ROTATION_SPEED
 
     if (this.controls) this.controls.update() // for damping
     this.renderer.render(this.scene, this.camera)
