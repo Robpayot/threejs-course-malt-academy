@@ -6,6 +6,7 @@ const ASSETS = './intermediate/img/'
 
 const LINE_LENGTH = 10
 const COLUMN_LENGTH = 10
+const DELAY_RESET_SPHERE = 500
 
 export default class Scene {
   constructor(el) {
@@ -16,8 +17,8 @@ export default class Scene {
 
   load() {
     const textureLoader = new THREE.TextureLoader()
-    textureLoader.load(`${ASSETS}texture.png`, result => {
-      this.texture = result
+    textureLoader.load(`${ASSETS}matcap.png`, result => {
+      this.matcapTexture = result
       this.init()
     })
   }
@@ -28,7 +29,7 @@ export default class Scene {
     this.buildRender()
     this.buildCamera()
     this.buildControls()
-    this.buildAxesHelper()
+    // this.buildAxesHelper()
     this.buildBoxes()
     this.buildRaycaster()
 
@@ -46,6 +47,7 @@ export default class Scene {
 
   buildScene() {
     this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0x122145)
   }
 
   buildRender() {
@@ -63,7 +65,7 @@ export default class Scene {
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.updateProjectionMatrix()
-    this.camera.position.y = 5
+    this.camera.position.y = 3
     this.camera.position.x = 5
     this.camera.position.z = 5
     this.camera.lookAt(0, 0, 0)
@@ -91,11 +93,12 @@ export default class Scene {
 
   buildBoxes() {
     this.boxes = []
-    const geometry = new THREE.BoxGeometry(1, 1, 1)
+    // const geometry = new THREE.BoxGeometry(1, 1, 1)
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32)
 
     for (let i = 0; i < LINE_LENGTH; i++) {
       for (let y = 0; y < COLUMN_LENGTH; y++) {
-        const material = new THREE.MeshBasicMaterial({ map: this.texture })
+        const material = new THREE.MeshMatcapMaterial({ matcap: this.matcapTexture, transparent: true })
         const mesh = new THREE.Mesh(geometry, material)
         mesh.position.x = i - LINE_LENGTH / 2 + 0.5
         mesh.position.z = y - COLUMN_LENGTH / 2 + 0.5
@@ -127,9 +130,8 @@ export default class Scene {
     const intersects = this.raycaster.intersectObjects(this.boxes)
 
     for (let i = 0; i < intersects.length; i++) {
-      if (!intersects[i].object.isRed) {
-        console.log('not red')
-        intersects[i].object.isRed = true
+      if (!intersects[i].object.isIntersected) {
+        intersects[i].object.isIntersected = true
         this.changeSphereMaterial(intersects[i].object)
       }
     }
@@ -142,11 +144,11 @@ export default class Scene {
   }
 
   changeSphereMaterial(object) {
-    object.material.color.set(0xff0000)
+    object.material.opacity = 0
     setTimeout(() => {
-      object.material.color.set(0xffffff)
-      object.isRed = false
-    }, 2000)
+      object.material.opacity = 1
+      object.isIntersected = false
+    }, DELAY_RESET_SPHERE)
   }
 
   handleMousemove = event => {

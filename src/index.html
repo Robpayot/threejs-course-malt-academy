@@ -9,9 +9,61 @@
     <meta name="author" content="Robin Payot" />
   </head>
 
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap');
+
+    body {
+      font-family: 'Lora';
+      color: black;
+    }
+
+    header {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 80px;
+      font-size: 40px;
+    }
+
+    .container {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: center;
+      left: 0;
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+
+    .exercice {
+      color: black;
+      font-size: 32px;
+      margin: 20px;
+      text-decoration: none;
+    }
+
+    .exercice:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      bottom: 80px;
+      font-size: 24px;
+    }
+  </style>
+
   <body>
-    <a href="/basic">Basic exercice</a>
-    <a href="/intermediate">Intermediate exercice</a>
-    <a href="/advanced">Advanced exercice</a>
+    <header class="title">THREE.JS course for Malt Academy</header>
+    <section class="container">
+      <a class="exercice" href="/basic">Basic exercice</a>
+      <a class="exercice" href="/intermediate">Intermediate exercice</a>
+      <a class="exercice" href="/advanced">Advanced exercice</a>
+    </section>
+    <footer>by <a href="https://twitter.com/RobinPayot" target="_blank">Robin Payot</a></footer>
   </body>
 </html>
