@@ -220,25 +220,33 @@ export default class Scene {
   }
 
   goPrev = () => {
-    if (this.isAnimating && this.nextModelIndex !== this.modelIndex) {
-      // directly update index to next animation
-      this.modelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
-    }
+    this.updateIndexAnimated()
 
     this.nextModelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
     this.explodeStart = performance.now()
     this.imploseStart = null
+    this.isGoingNext = false
+    this.isGoingPrev = true
   }
 
   goNext = () => {
-    if (this.isAnimating && this.nextModelIndex !== this.modelIndex) {
-      // directly update index to next animation
-      this.modelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
-    }
+    this.updateIndexAnimated()
 
     this.nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
     this.explodeStart = performance.now()
     this.imploseStart = null
+    this.isGoingNext = true
+    this.isGoingPrev = false
+  }
+
+  // Prevent model index conflict if we click while there's still an animation
+  updateIndexAnimated() {
+    if (this.isGoingPrev) {
+      this.modelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
+    } else if (this.isGoingNext) {
+      // directly update index to next animation
+      this.modelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
+    }
   }
 
   handleResize = () => {
@@ -283,7 +291,6 @@ export default class Scene {
     }
 
     positions.needsUpdate = true
-    this.isAnimating = true
   }
 
   implose(now) {
@@ -306,7 +313,8 @@ export default class Scene {
     } else {
       this.imploseStart = null
       this.modelIndex = this.nextModelIndex
-      this.isAnimating = false
+      this.isGoingPrev = false
+      this.isGoingNext = false
     }
 
     positions.needsUpdate = true
