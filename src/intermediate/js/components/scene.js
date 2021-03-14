@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import Stats from 'stats-js'
 
-const ASSETS = './intermediate/img/'
+const ASSETS = `${window.location.href}/img/`
 
 const LINE_LENGTH = 10
 const COLUMN_LENGTH = 10

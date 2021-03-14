@@ -4,7 +4,7 @@ import Stats from 'stats-js'
 
 import dat from 'dat.gui'
 
-const ASSETS = './basic/img/'
+const ASSETS = `${window.location.href}/img/`
 
 export default class Scene {
   constructor(el) {

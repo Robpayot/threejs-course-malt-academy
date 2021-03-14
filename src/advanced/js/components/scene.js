@@ -9,7 +9,7 @@ import deer from '../../models/deer.obj'
 import cat from '../../models/cat.obj'
 import dat from 'dat.gui'
 
-const ASSETS = './advanced/img/'
+const ASSETS = `${window.location.href}/img/`
 const NB_PARTICLES = 6000
 const EXPLODE_DURATION = 1300 // in miliseconds
 const IMPLODE_DURATION = 1700
