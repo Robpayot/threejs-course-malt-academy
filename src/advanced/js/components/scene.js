@@ -12,7 +12,7 @@ import dat from 'dat.gui'
 const ASSETS = './advanced/img/'
 const NB_PARTICLES = 6000
 const EXPLODE_DURATION = 1300 // in miliseconds
-const IMPLOSE_DURATION = 1700
+const IMPLODE_DURATION = 1700
 const ROTATION_SPEED = 1 / 400
 const EXPLOSION_FORCE = 4.5
 
@@ -224,7 +224,7 @@ export default class Scene {
 
     this.nextModelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
     this.explodeStart = performance.now()
-    this.imploseStart = null
+    this.implodeStart = null
     this.isGoingNext = false
     this.isGoingPrev = true
   }
@@ -234,7 +234,7 @@ export default class Scene {
 
     this.nextModelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
     this.explodeStart = performance.now()
-    this.imploseStart = null
+    this.implodeStart = null
     this.isGoingNext = true
     this.isGoingPrev = false
   }
@@ -287,16 +287,16 @@ export default class Scene {
       }
     } else {
       this.explodeStart = null
-      this.imploseStart = performance.now()
+      this.implodeStart = performance.now()
     }
 
     positions.needsUpdate = true
   }
 
-  implose(now) {
+  implode(now) {
     const positions = this.meshPoints.geometry.getAttribute('position')
 
-    const percent = (now - this.imploseStart) / IMPLOSE_DURATION
+    const percent = (now - this.implodeStart) / IMPLODE_DURATION
     if (percent < 1) {
       const animations = this.modelAnimations[this.modelIndex]
       const nextAnimations = this.modelAnimations[this.nextModelIndex]
@@ -311,7 +311,7 @@ export default class Scene {
           v.targetPosition.z + (vNext.initPosition.z - v.targetPosition.z) * inOutQuad(percent)
       }
     } else {
-      this.imploseStart = null
+      this.implodeStart = null
       this.modelIndex = this.nextModelIndex
       this.isGoingPrev = false
       this.isGoingNext = false
@@ -324,12 +324,14 @@ export default class Scene {
   render = now => {
     this.stats.begin()
 
+    // render explode animation
     if (this.explodeStart) {
       this.explode(now)
     }
 
-    if (this.imploseStart) {
-      this.implose(now)
+    // render implode animation
+    if (this.implodeStart) {
+      this.implode(now)
     }
 
     this.meshPoints.rotation.y -= ROTATION_SPEED
