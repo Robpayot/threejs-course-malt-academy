@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import Stats from 'stats-js'
 
+import dat from 'dat.gui'
+
 const ASSETS = './basic/img/'
 
 export default class Scene {
@@ -22,6 +24,7 @@ export default class Scene {
   }
 
   init = () => {
+    this.buildGui()
     this.buildStats()
     this.buildScene()
     this.buildRender()
@@ -39,6 +42,23 @@ export default class Scene {
     this.events()
   }
 
+  buildGui() {
+    this.gui = new dat.GUI()
+
+    this.guiController = {
+      spotlightX: 0.2,
+      spotlightIntensity: 1
+    }
+    this.gui
+      .add(this.guiController, 'spotlightX', -10, 10)
+      .name('spotlight X pos')
+      .onChange(this.handleGuiChange)
+    this.gui
+      .add(this.guiController, 'spotlightIntensity', 0, 3)
+      .name('spotlight power')
+      .onChange(this.handleGuiChange)
+  }
+
   buildStats() {
     this.stats = new Stats()
     this.stats.showPanel(0)
@@ -47,6 +67,7 @@ export default class Scene {
 
   buildScene() {
     this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0x122145)
   }
 
   buildRender() {
@@ -94,7 +115,7 @@ export default class Scene {
 
   buildSphere() {
     const geometry = new THREE.SphereGeometry(1, 32, 32)
-    const material = new THREE.MeshMatcapMaterial({ matcap: this.matcapTexture })
+    const material = new THREE.MeshPhongMaterial({ color: 0xeb142a })
     this.sphere = new THREE.Mesh(geometry, material)
     this.sphere.position.set(0, 0, 0)
     this.scene.add(this.sphere)
@@ -102,7 +123,7 @@ export default class Scene {
 
   buildCone() {
     const geometry = new THREE.ConeGeometry(1, 2, 120)
-    const material = new THREE.MeshPhongMaterial({ color: 0x61BFF9 })
+    const material = new THREE.MeshMatcapMaterial({ matcap: this.matcapTexture })
     this.cone = new THREE.Mesh(geometry, material)
     this.cone.position.set(3, 0, 0)
     this.scene.add(this.cone)
@@ -110,7 +131,7 @@ export default class Scene {
 
   buildLight() {
     this.pointLight = new THREE.PointLight(0xffffff, 1, 100)
-    this.pointLight.position.set(0,5,5)
+    this.pointLight.position.set(2, 5, 5)
     this.scene.add(this.pointLight)
   }
 
@@ -126,13 +147,17 @@ export default class Scene {
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
 
-
     this.box.rotation.x += 1 / 500
     this.box.rotation.y += 1 / 500
     this.cone.rotation.x += 1 / 500
     this.cone.rotation.y += 1 / 500
     this.sphere.rotation.x += 1 / 500
     this.sphere.rotation.y += 1 / 500
+  }
+
+  handleGuiChange = () => {
+    this.pointLight.position.x = this.guiController.spotlightX
+    this.pointLight.intensity = this.guiController.spotlightIntensity
   }
 
   handleResize = () => {

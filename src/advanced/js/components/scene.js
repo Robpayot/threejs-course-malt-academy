@@ -220,7 +220,7 @@ export default class Scene {
   }
 
   goPrev = () => {
-    if (this.isAnimating) {
+    if (this.isAnimating && this.nextModelIndex !== this.modelIndex) {
       // directly update index to next animation
       this.modelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
     }
@@ -231,7 +231,7 @@ export default class Scene {
   }
 
   goNext = () => {
-    if (this.isAnimating) {
+    if (this.isAnimating && this.nextModelIndex !== this.modelIndex) {
       // directly update index to next animation
       this.modelIndex = this.modelIndex === this.models.length - 1 ? 0 : this.modelIndex + 1
     }
