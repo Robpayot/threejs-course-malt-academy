@@ -24,7 +24,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: isProd ? '[name]/bundle.js' : './[name]/bundle.js',
+    filename: isProd ? '[name].bundle.js' : './[name]/bundle.js',
     publicPath: isProd ? './' : '/',
   },
   module: {
