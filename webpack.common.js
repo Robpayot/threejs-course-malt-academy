@@ -23,9 +23,8 @@ module.exports = {
     advanced: path.join(sourceDir, 'advanced/entry.js'),
   },
   output: {
-    // filename: isProd ? '/bundle.[chunkhash].js' : './bundle.js',
     path: path.resolve(__dirname, 'build'),
-    filename: './[name]/bundle.js',
+    filename: isProd ? '[name]/bundle.js' : './[name]/bundle.js',
     publicPath: '/',
   },
   module: {
