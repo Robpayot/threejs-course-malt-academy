@@ -4,13 +4,13 @@ This repository contains 3 experiments from basic to more advanced.
 The goal is to show some example of how the (three.js)[https://threejs.org/] library made by mrdoob can be used to create 3D scenes in websites.
 
 Prerequisite:
-- Nodejs
-- Yarn
+- (Nodejs, npm)[https://nodejs.org/en/]
+- (Yarn)[https://yarnpkg.com/getting-started/install]
 
 Built with:
 
-- Webpack
-- Three.js
+- (Webpack)[https://webpack.js.org/]
+- (Three.js)[https://threejs.org/]
 
 ### Commands
 
