@@ -15,6 +15,9 @@ export default class Scene {
     this.load()
   }
 
+  /**
+   * Load our matcapTexture
+   */
   load() {
     const textureLoader = new THREE.TextureLoader()
     textureLoader.load(`${ASSETS}matcap.png`, result => {
@@ -23,14 +26,16 @@ export default class Scene {
     })
   }
 
+  /**
+   * Init everything
+   */
   init = () => {
     this.buildStats()
     this.buildScene()
     this.buildRender()
     this.buildCamera()
     this.buildControls()
-    // this.buildAxesHelper()
-    this.buildBoxes()
+    this.buildSpheres()
     this.buildRaycaster()
 
     this.handleResize()
@@ -39,17 +44,28 @@ export default class Scene {
     this.events()
   }
 
+  /**
+   * Build stats to display fps
+   */
   buildStats() {
     this.stats = new Stats()
     this.stats.showPanel(0)
     document.body.appendChild(this.stats.dom)
   }
 
+  /**
+   * This is our scene, we'll add any object
+   * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
+   */
   buildScene() {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x122145)
   }
 
+  /**
+   * Our Webgl renderer, an object that will draw everything in our canvas
+   * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
+   */
   buildRender() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -57,6 +73,13 @@ export default class Scene {
     })
   }
 
+  /**
+   * Our Perspective camera, this is the point of view that we'll have
+   * of our scene.
+   * A perscpective camera is mimicing the human eyes so something far we'll
+   * look smaller than something close
+   * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
+   */
   buildCamera() {
     const aspectRatio = this.width / this.height
     const fieldOfView = 80
@@ -73,25 +96,28 @@ export default class Scene {
     this.scene.add(this.camera)
   }
 
+  /**
+   * Raycast to interracts with objects using our mouse
+   * https://threejs.org/docs/?q=raycas#api/en/core/Raycaster
+   */
   buildRaycaster() {
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
   }
 
+  /**
+   * Threejs controls to have controls on our scene
+   * https://threejs.org/docs/?q=orbi#examples/en/controls/OrbitControls
+   */
   buildControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     // this.controls.enableDamping = true
   }
 
   /**
-   * Axes Helper
+   * Build our spheres by lines and columns
    */
-  buildAxesHelper() {
-    const axesHelper = new THREE.AxesHelper(3)
-    this.scene.add(axesHelper)
-  }
-
-  buildBoxes() {
+  buildSpheres() {
     this.boxes = []
     // const geometry = new THREE.BoxGeometry(1, 1, 1)
     const geometry = new THREE.SphereGeometry(0.5, 32, 32)
@@ -108,6 +134,9 @@ export default class Scene {
     }
   }
 
+  /**
+   * List of events
+   */
   events() {
     window.addEventListener('resize', this.handleResize, { passive: true })
     this.handleRAF(0)
@@ -116,6 +145,12 @@ export default class Scene {
 
   // EVENTS
 
+  /**
+   * Request animation frame
+   * This function is called 60/time per seconds with no performance issue
+   * Everything that happens in the scene is drawed here
+   * @param {Number} now
+   */
   handleRAF = now => {
     // now: time in ms
     this.render(now)
@@ -132,7 +167,7 @@ export default class Scene {
     for (let i = 0; i < intersects.length; i++) {
       if (!intersects[i].object.isIntersected) {
         intersects[i].object.isIntersected = true
-        this.changeSphereMaterial(intersects[i].object)
+        this.hideSphereMaterial(intersects[i].object)
       }
     }
 
@@ -143,7 +178,11 @@ export default class Scene {
     }
   }
 
-  changeSphereMaterial(object) {
+  /**
+   * Hide our mesh material on mouse hover
+   * @param {Object} object mesh instersected by the mouse
+   */
+  hideSphereMaterial(object) {
     object.material.opacity = 0
     setTimeout(() => {
       object.material.opacity = 1
@@ -151,6 +190,10 @@ export default class Scene {
     }, DELAY_RESET_SPHERE)
   }
 
+  /**
+   *  Store the position of the mouse based on the window
+   * @param {MouseInput} event mouse event
+   */
   handleMousemove = event => {
     // calculate mouse position in normalized device coordinates
     // (-1 to +1) for both components
@@ -159,6 +202,10 @@ export default class Scene {
     this.mouse.y = -(event.clientY / this.height) * 2 + 1
   }
 
+  /**
+   * On resize, we need to adapt our camera based
+   * on the new window width and height and the renderer
+   */
   handleResize = () => {
     this.width = window.innerWidth
     this.height = window.innerHeight
@@ -173,7 +220,10 @@ export default class Scene {
     this.renderer.setSize(this.width, this.height)
   }
 
-  // Render
+  /**
+   * Render our scene
+   * @param {Number} now current time
+   */
   render = now => {
     this.stats.begin()
 

@@ -40,6 +40,10 @@ export default class Scene {
     ])
   }
 
+  /**
+   * Load textures or object and put them in a corresponding store
+   * @param {Object} objects
+   */
   load = objects => {
     const promises = []
     const objLoader = new OBJLoader()
@@ -75,11 +79,14 @@ export default class Scene {
     Promise.all(promises).then(this.init)
   }
 
+  /**
+   * Init our scene
+   */
   init = () => {
     this.buildGui()
     this.buildStats()
     this.buildScene()
-    this.buildRender()
+    this.buildRenderer()
     this.buildCamera()
     // Order models 'deer', 'wolf', 'cat' whatever the loading order has given
     this.models = [this.modelsStore['deer'], this.modelsStore['wolf'], this.modelsStore['cat']]
@@ -94,6 +101,9 @@ export default class Scene {
     this.events()
   }
 
+  /**
+   * Set up gui
+   */
   buildGui() {
     this.gui = new dat.GUI()
 
@@ -117,24 +127,42 @@ export default class Scene {
       .onChange(this.handleGuiChange)
   }
 
+  /**
+   * Set up stats
+   */
   buildStats() {
     this.stats = new Stats()
     this.stats.showPanel(0)
     document.body.appendChild(this.stats.dom)
   }
 
+  /**
+   * This is our scene, we'll add any object
+   * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
+   */
   buildScene() {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0xffffff)
   }
 
-  buildRender() {
+  /**
+   * Our Webgl renderer, an object that will draw everything in our canvas
+   * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
+   */
+  buildRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
     })
   }
 
+  /**
+   * Our Perspective camera, this is the point of view that we'll have
+   * of our scene.
+   * A perscpective camera is mimicing the human eyes so something far we'll
+   * look smaller than something close
+   * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
+   */
   buildCamera() {
     const aspectRatio = this.width / this.height
     const fieldOfView = 60
@@ -151,12 +179,18 @@ export default class Scene {
     this.scene.add(this.camera)
   }
 
+  /**
+   * Create an initial position and a final position (target) for each
+   * vertices (3D points) of our model
+   * This will help us moving all the vertices from one 3D space place to another
+   * @param {Number} index
+   */
   buildPointsAnimation(index) {
     const unscale = this.modelsScale[index]
 
-    // this.model.children[0].geometry.scale.set(0.1, 0.1, 0.1)
-    // Get a list of random points (THREE.Vector3) inside our model
-    // here we are using an utils that doing the math for us
+    // Display a specific number of points inside our model Geometry
+    // These points are spread randomly inside.
+    // Here we are using an utils that doing the math for us
     const randomPoints = GeometryUtils.randomPointsInBufferGeometry(
       this.models[index].children[0].geometry,
       NB_PARTICLES,
@@ -183,6 +217,13 @@ export default class Scene {
     this.modelAnimations.push(pointsAnimation)
   }
 
+  /**
+   * Creating our only mesh
+   * We're using first the points animation init position of our first model (deer)
+   * We're using the PointsMaterial which is creating particles for each vertices of our
+   * geometry
+   * Then we add it to the scene
+   */
   buildMeshPoint() {
     const pointsAnimation = this.modelAnimations[0]
     const initPositions = pointsAnimation.map(item => item.initPosition)
@@ -212,6 +253,9 @@ export default class Scene {
     this.scene.add(this.meshPoints)
   }
 
+  /**
+   * List of events
+   */
   events() {
     window.addEventListener('resize', this.handleResize, { passive: true })
     window.addEventListener('go-prev', this.goPrev)
@@ -221,12 +265,21 @@ export default class Scene {
 
   // EVENTS
 
+  /**
+   * Request animation frame
+   * This function is called 60/time per seconds with no performance issue
+   * Everything that happens in the scene is drawed here
+   * @param {Number} now
+   */
   handleRAF = now => {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
   }
 
+  /**
+   * animate previous model
+   */
   goPrev = () => {
     this.updateIndexAnimated()
 
@@ -237,6 +290,9 @@ export default class Scene {
     this.isGoingPrev = true
   }
 
+  /**
+   * animate next model
+   */
   goNext = () => {
     this.updateIndexAnimated()
 
@@ -247,7 +303,9 @@ export default class Scene {
     this.isGoingPrev = false
   }
 
-  // Prevent model index conflict if we click while there's still an animation
+  /**
+   *  Prevent model index conflict if we click while there's still an animation
+   */
   updateIndexAnimated() {
     if (this.isGoingPrev) {
       this.modelIndex = this.modelIndex === 0 ? this.models.length - 1 : this.modelIndex - 1
@@ -257,6 +315,9 @@ export default class Scene {
     }
   }
 
+  /**
+   * On resize
+   */
   handleResize = () => {
     this.width = window.innerWidth
     this.height = window.innerHeight
@@ -271,6 +332,9 @@ export default class Scene {
     this.renderer.setSize(this.width, this.height)
   }
 
+  /**
+   * On GUI change
+   */
   handleGuiChange = () => {
     //set the color in the object
     this.meshPoints.material.color = new THREE.Color(this.guiController.color)
@@ -280,6 +344,7 @@ export default class Scene {
 
   /**
    * Make particules explode in randomDirections
+   * @param {Number} now current time
    */
   explode(now) {
     const positions = this.meshPoints.geometry.getAttribute('position')
@@ -301,6 +366,10 @@ export default class Scene {
     positions.needsUpdate = true
   }
 
+  /**
+   * Make particules implode in randomDirections
+   * @param {Number} now current time
+   */
   implode(now) {
     const positions = this.meshPoints.geometry.getAttribute('position')
 
@@ -328,7 +397,10 @@ export default class Scene {
     positions.needsUpdate = true
   }
 
-  // Render
+  /**
+   * Render our scene
+   * @param {Number} now current time
+   */
   render = now => {
     this.stats.begin()
 
@@ -342,6 +414,7 @@ export default class Scene {
       this.implode(now)
     }
 
+    // Rotate our mesh
     this.meshPoints.rotation.y -= ROTATION_SPEED
 
     if (this.controls) this.controls.update() // for damping
@@ -351,7 +424,9 @@ export default class Scene {
   }
 
   /**
-   * Destroy objects in scene
+   * Not used in this tutorial but to keep in mind
+   * if you need to dynamically remove and readd the scene
+   * Destroy all objects in scene
    */
   destroy() {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
