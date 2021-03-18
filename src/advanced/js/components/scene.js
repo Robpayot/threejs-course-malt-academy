@@ -26,12 +26,17 @@ export default class Scene {
     this.modelsScale = [300, 200, 200]
     this.modelAnimations = []
     this.textures = []
+    //  model object where we store the loaded models with a name
+    this.modelsStore = {}
+
+    //  model object where we store the loaded textures with a name
+    this.texturesStore = {}
 
     this.load([
-      { type: 'obj', url: deer },
-      { type: 'obj', url: wolf },
-      { type: 'obj', url: cat },
-      { type: 'texture', url: `${ASSETS}particle.png` },
+      { type: 'obj', url: deer, name: 'deer' },
+      { type: 'obj', url: wolf, name: 'wolf' },
+      { type: 'obj', url: cat, name: 'cat' },
+      { type: 'texture', url: `${ASSETS}particle.png`, name: 'particle' },
     ])
   }
 
@@ -41,14 +46,15 @@ export default class Scene {
     const textureLoader = new THREE.TextureLoader()
 
     for (let i = 0; i < objects.length; i++) {
-      const { type, url } = objects[i]
+      const { type, url, name } = objects[i]
 
       if (type === 'obj') {
         // load OBJ
+        // add name to get array in right order
         promises.push(
           new Promise(resolve => {
             objLoader.load(url, result => {
-              this.models.push(result)
+              this.modelsStore[name] = result
               resolve(result)
             })
           }),
@@ -58,7 +64,7 @@ export default class Scene {
         promises.push(
           new Promise(resolve => {
             textureLoader.load(url, result => {
-              this.textures.push(result)
+              this.texturesStore[name] = result
               resolve(result)
             })
           }),
@@ -75,6 +81,8 @@ export default class Scene {
     this.buildScene()
     this.buildRender()
     this.buildCamera()
+    // Order models 'deer', 'wolf', 'cat' whatever the loading order has given
+    this.models = [this.modelsStore['deer'], this.modelsStore['wolf'], this.modelsStore['cat']]
     for (let i = 0; i < this.models.length; i++) {
       this.buildPointsAnimation(i)
     }
@@ -194,7 +202,7 @@ export default class Scene {
       transparent: true,
       // blending: THREE.AdditiveBlending,
       opacity: this.guiController.opacity,
-      map: this.textures[0],
+      map: this.texturesStore['particle'],
     })
 
     this.meshPoints = new THREE.Points(randomizedGeometry, material)
