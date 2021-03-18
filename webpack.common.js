@@ -63,15 +63,6 @@ module.exports = {
         ],
       },
       {
-        test: /\.(mp4)$/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: { name: 'videos/[name].[ext]' },
-          },
-        ],
-      },
-      {
         test: /\.(eot|ttf|woff|woff2)$/,
         use: [
           {
@@ -137,6 +128,12 @@ module.exports = {
       {
         from: path.join(sourceDir, 'advanced/img'),
         to: 'advanced/img',
+      },
+    ]),
+    new CopyWebpackPlugin([
+      {
+        from: path.join(sourceDir, 'thumbnail'),
+        to: 'thumbnail',
       },
     ]),
     new MiniCssExtractPlugin({
