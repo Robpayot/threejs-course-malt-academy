@@ -32,5 +32,6 @@ Build for production:
 yarn build
 ```
 
+https://user-images.githubusercontent.com/5593293/111711247-904fb680-884b-11eb-872c-7fdda03a787b.mp4
 
-![thumbnail](https://robpayot.github.io/threejs-course-malt-academy/build/thumbnail/exo-all.mp4)
+
