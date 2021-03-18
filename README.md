@@ -33,4 +33,4 @@ yarn build
 ```
 
 
-![thumbnail](https://github.com/Robpayot/threejs-boilerplate/blob/main/src/img/thumbnail.png?raw=true)
+![thumbnail](https://github.com/Robpayot/threejs-course-malt-academy/blob/main/src/advanced/videos/exo-all.mp4?raw=true)
