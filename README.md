@@ -33,4 +33,4 @@ yarn build
 ```
 
 
-![thumbnail](https://github.com/Robpayot/threejs-course-malt-academy/blob/main/src/advanced/videos/exo-all.mp4?raw=true)
+![thumbnail](https://robpayot.github.io/threejs-course-malt-academy/build/thumbnail/exo-all.mp4)
