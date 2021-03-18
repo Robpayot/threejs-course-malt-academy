@@ -83,17 +83,17 @@ export default class Scene {
    * Init our scene
    */
   init = () => {
-    this.buildGui()
-    this.buildStats()
-    this.buildScene()
-    this.buildRenderer()
-    this.buildCamera()
+    this.setGui()
+    this.setStats()
+    this.setScene()
+    this.setRenderer()
+    this.setCamera()
     // Order models 'deer', 'wolf', 'cat' whatever the loading order has given
     this.models = [this.modelsStore['deer'], this.modelsStore['wolf'], this.modelsStore['cat']]
     for (let i = 0; i < this.models.length; i++) {
-      this.buildPointsAnimation(i)
+      this.setPointsAnimation(i)
     }
-    this.buildMeshPoint()
+    this.setMeshPoint()
 
     this.handleResize()
 
@@ -104,7 +104,7 @@ export default class Scene {
   /**
    * Set up gui
    */
-  buildGui() {
+  setGui() {
     this.gui = new dat.GUI()
 
     this.guiController = {
@@ -130,7 +130,7 @@ export default class Scene {
   /**
    * Set up stats
    */
-  buildStats() {
+  setStats() {
     this.stats = new Stats()
     this.stats.showPanel(0)
     document.body.appendChild(this.stats.dom)
@@ -140,7 +140,7 @@ export default class Scene {
    * This is our scene, we'll add any object
    * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
    */
-  buildScene() {
+  setScene() {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0xffffff)
   }
@@ -149,7 +149,7 @@ export default class Scene {
    * Our Webgl renderer, an object that will draw everything in our canvas
    * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
    */
-  buildRenderer() {
+  setRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -163,7 +163,7 @@ export default class Scene {
    * look smaller than something close
    * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
    */
-  buildCamera() {
+  setCamera() {
     const aspectRatio = this.width / this.height
     const fieldOfView = 60
     const nearPlane = 0.1
@@ -185,7 +185,7 @@ export default class Scene {
    * This will help us moving all the vertices from one 3D space place to another
    * @param {Number} index
    */
-  buildPointsAnimation(index) {
+  setPointsAnimation(index) {
     const unscale = this.modelsScale[index]
 
     // Display a specific number of points inside our model Geometry
@@ -224,7 +224,7 @@ export default class Scene {
    * geometry
    * Then we add it to the scene
    */
-  buildMeshPoint() {
+  setMeshPoint() {
     const pointsAnimation = this.modelAnimations[0]
     const initPositions = pointsAnimation.map(item => item.initPosition)
     // Transform this list of point into an Float32Array

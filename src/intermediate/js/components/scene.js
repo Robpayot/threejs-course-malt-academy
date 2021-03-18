@@ -30,13 +30,13 @@ export default class Scene {
    * Init everything
    */
   init = () => {
-    this.buildStats()
-    this.buildScene()
-    this.buildRender()
-    this.buildCamera()
-    this.buildControls()
-    this.buildSpheres()
-    this.buildRaycaster()
+    this.setStats()
+    this.setScene()
+    this.setRender()
+    this.setCamera()
+    this.setControls()
+    this.setSpheres()
+    this.setRaycaster()
 
     this.handleResize()
 
@@ -47,7 +47,7 @@ export default class Scene {
   /**
    * Build stats to display fps
    */
-  buildStats() {
+  setStats() {
     this.stats = new Stats()
     this.stats.showPanel(0)
     document.body.appendChild(this.stats.dom)
@@ -57,7 +57,7 @@ export default class Scene {
    * This is our scene, we'll add any object
    * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
    */
-  buildScene() {
+  setScene() {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x122145)
   }
@@ -66,7 +66,7 @@ export default class Scene {
    * Our Webgl renderer, an object that will draw everything in our canvas
    * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
    */
-  buildRender() {
+  setRender() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -80,7 +80,7 @@ export default class Scene {
    * look smaller than something close
    * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
    */
-  buildCamera() {
+  setCamera() {
     const aspectRatio = this.width / this.height
     const fieldOfView = 80
     const nearPlane = 0.1
@@ -100,7 +100,7 @@ export default class Scene {
    * Raycast to interracts with objects using our mouse
    * https://threejs.org/docs/?q=raycas#api/en/core/Raycaster
    */
-  buildRaycaster() {
+  setRaycaster() {
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
   }
@@ -109,7 +109,7 @@ export default class Scene {
    * Threejs controls to have controls on our scene
    * https://threejs.org/docs/?q=orbi#examples/en/controls/OrbitControls
    */
-  buildControls() {
+  setControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     // this.controls.enableDamping = true
   }
@@ -117,7 +117,7 @@ export default class Scene {
   /**
    * Build our spheres by lines and columns
    */
-  buildSpheres() {
+  setSpheres() {
     this.boxes = []
     // const geometry = new THREE.BoxGeometry(1, 1, 1)
     const geometry = new THREE.SphereGeometry(0.5, 32, 32)
