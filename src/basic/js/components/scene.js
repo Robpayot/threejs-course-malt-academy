@@ -7,6 +7,23 @@ import dat from 'dat.gui'
 const ASSETS = `${window.location.href}/img/`
 
 export default class Scene {
+  canvas
+  renderer
+  scene
+  camera
+  controls
+  stats
+  width
+  height
+  boxTexture
+  matcapTexture
+  gui
+  guiController
+  box
+  sphere
+  cone
+  pointLight
+
   constructor(el) {
     this.canvas = el
 
@@ -41,32 +58,6 @@ export default class Scene {
 
     // start RAF
     this.events()
-  }
-
-  setGui() {
-    this.gui = new dat.GUI()
-
-    this.guiController = {
-      spotlightX: 0.2,
-      spotlightIntensity: 1,
-    }
-    this.gui
-      .add(this.guiController, 'spotlightX', -10, 10)
-      .name('spotlight X pos')
-      .onChange(this.handleGuiChange)
-    this.gui
-      .add(this.guiController, 'spotlightIntensity', 0, 3)
-      .name('spotlight power')
-      .onChange(this.handleGuiChange)
-  }
-
-  /**
-   * Build stats to display fps
-   */
-  setStats() {
-    this.stats = new Stats()
-    this.stats.showPanel(0)
-    document.body.appendChild(this.stats.dom)
   }
 
   /**
@@ -179,6 +170,36 @@ export default class Scene {
     this.pointLight = new THREE.PointLight(0xffffff, 1, 100)
     this.pointLight.position.set(2, 5, 5)
     this.scene.add(this.pointLight)
+  }
+
+  /**
+   * add dat.gui controls
+   * https://github.com/dataarts/dat.gui
+   */
+  setGui() {
+    this.gui = new dat.GUI()
+
+    this.guiController = {
+      spotlightX: 0.2,
+      spotlightIntensity: 1,
+    }
+    this.gui
+      .add(this.guiController, 'spotlightX', -10, 10)
+      .name('spotlight X pos')
+      .onChange(this.handleGuiChange)
+    this.gui
+      .add(this.guiController, 'spotlightIntensity', 0, 3)
+      .name('spotlight power')
+      .onChange(this.handleGuiChange)
+  }
+
+  /**
+   * Build stats to display fps
+   */
+  setStats() {
+    this.stats = new Stats()
+    this.stats.showPanel(0)
+    document.body.appendChild(this.stats.dom)
   }
 
   /**
