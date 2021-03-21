@@ -7,8 +7,23 @@ const ASSETS = `${window.location.href}/img/`
 const LINE_LENGTH = 10
 const COLUMN_LENGTH = 10
 const DELAY_RESET_SPHERE = 500
+const WAVE_FREQUENCE = 900
+const WAVE_AMPLITUDE = 2
 
 export default class Scene {
+  canvas
+  renderer
+  scene
+  camera
+  controls
+  stats
+  width
+  height
+  matcapTexture
+  spheres
+  mouse
+  raycaster
+
   constructor(el) {
     this.canvas = el
 
@@ -87,11 +102,9 @@ export default class Scene {
     const farPlane = 10000
 
     this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
-    this.camera.updateProjectionMatrix()
     this.camera.position.y = 3
     this.camera.position.x = 5
     this.camera.position.z = 5
-    this.camera.lookAt(0, 0, 0)
 
     this.scene.add(this.camera)
   }
@@ -118,8 +131,7 @@ export default class Scene {
    * Build our spheres by lines and columns
    */
   setSpheres() {
-    this.boxes = []
-    // const geometry = new THREE.BoxGeometry(1, 1, 1)
+    this.spheres = []
     const geometry = new THREE.SphereGeometry(0.5, 32, 32)
 
     for (let i = 0; i < LINE_LENGTH; i++) {
@@ -128,7 +140,7 @@ export default class Scene {
         const mesh = new THREE.Mesh(geometry, material)
         mesh.position.x = i - LINE_LENGTH / 2 + 0.5
         mesh.position.z = y - COLUMN_LENGTH / 2 + 0.5
-        this.boxes.push(mesh)
+        this.spheres.push(mesh)
         this.scene.add(mesh)
       }
     }
@@ -155,15 +167,14 @@ export default class Scene {
     // now: time in ms
     this.render(now)
     this.raf = window.requestAnimationFrame(this.handleRAF)
-    const fq = 900
-    const amplitude = 2
 
     // update the picking ray with the camera and mouse position
     this.raycaster.setFromCamera(this.mouse, this.camera)
 
     // calculate objects intersecting the picking ray
-    const intersects = this.raycaster.intersectObjects(this.boxes)
+    const intersects = this.raycaster.intersectObjects(this.spheres)
 
+    // hideSphereMaterial on raycaster detection
     for (let i = 0; i < intersects.length; i++) {
       if (!intersects[i].object.isIntersected) {
         intersects[i].object.isIntersected = true
@@ -171,10 +182,13 @@ export default class Scene {
       }
     }
 
-    for (let i = 0; i < this.boxes.length; i++) {
-      const box = this.boxes[i]
-      box.position.y =
-        (Math.sin(now / fq + box.position.x * 100) + Math.sin(now / fq + box.position.z * 100)) / amplitude
+    // Animate spheres as a wave based on current time
+    for (let i = 0; i < this.spheres.length; i++) {
+      const sphere = this.spheres[i]
+      sphere.position.y =
+        (Math.sin(now / WAVE_FREQUENCE + sphere.position.x * (LINE_LENGTH * COLUMN_LENGTH)) +
+          Math.sin(now / WAVE_FREQUENCE + sphere.position.z * (LINE_LENGTH * COLUMN_LENGTH))) /
+        WAVE_AMPLITUDE
     }
   }
 

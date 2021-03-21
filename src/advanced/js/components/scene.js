@@ -17,6 +17,30 @@ const ROTATION_SPEED = 1 / 400
 const EXPLOSION_FORCE = 4.5
 
 export default class Scene {
+  canvas
+  renderer
+  scene
+  camera
+  controls
+  stats
+  width
+  height
+  gui
+  guiController
+  modelIndex
+  nextModelIndex
+  models
+  modelsScale
+  modelAnimations
+  textures
+  modelsStore
+  modelsStore
+  meshPoints
+  implodeStart
+  explodeStart
+  isGoingNext
+  isGoingPrev
+
   constructor(el) {
     this.canvas = el
 
