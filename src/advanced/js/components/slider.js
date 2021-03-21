@@ -1,6 +1,12 @@
 const TITLES = ['Deer', 'Wolf', 'Cat']
 
 export default class Slider {
+  el
+  prevEl
+  nextEl
+  titleEl
+  index
+
   constructor(el) {
     this.el = el
 
